@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+require 'cloudflare/ddns'
+require 'docopt'
+
+# Cloudflare::DDNS.hello
+PROGRAM_NAME = File.basename(__FILE__)
+
+doc = <<DOCOPT
+Updates Cloudflare DNS record with current IP
+
+Usage:
+  #{PROGRAM_NAME} --zone=<zone> --record=<record> [--api-token=<api-token>]
+
+Options:
+  --zone=<zone>           The name of the zone to update
+  --record=<record>       The name of the record to update
+  --api-token=<api-token> The API token (can also be passed using CLOUDFLARE_API_TOKEN env variable)
+DOCOPT
+
+begin
+  args = Docopt.docopt(doc)
+  api_token = args['--api-token'] || ENV['CLOUDFLARE_API_TOKEN']
+  raise Docopt::Exit, "CLOUDFLARE_API_TOKEN not found, see `#{PROGRAM_NAME} -h` for help" if api_token.nil?
+  record = args['--record']
+
+  result = Cloudflare::DDNS.update_record(api_token, args['--zone'], record)
+  puts "#{record} updated to #{result}" if result
+rescue Docopt::Exit => e
+  puts e.message
+  exit
+end
